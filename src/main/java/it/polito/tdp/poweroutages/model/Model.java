@@ -1,6 +1,7 @@
 package it.polito.tdp.poweroutages.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import it.polito.tdp.poweroutages.DAO.PowerOutageDAO;
@@ -8,6 +9,7 @@ import it.polito.tdp.poweroutages.DAO.PowerOutageDAO;
 public class Model {
 
 	PowerOutageDAO podao;
+	List<PowerOutage> powerOutagesByNerc;
 
 	private List<PowerOutage> best;
 	private int bestNumberOfCustomers;
@@ -29,28 +31,29 @@ public class Model {
 	}
 
 	public List<PowerOutage> calculatePowerOutagesSubset(Nerc nerc, int x, int y) {
-		List<PowerOutage> powerOutagesByNerc = podao.getPowerOutagesByNerc(nerc);
+		powerOutagesByNerc = podao.getPowerOutagesByNerc(nerc);
+		Collections.sort(powerOutagesByNerc);
 		best = new ArrayList<PowerOutage>();
 		bestNumberOfCustomers = 0;
 		List<PowerOutage> partial = new ArrayList<PowerOutage>();
-		search(partial, 0, powerOutagesByNerc, x, y);
+		search(partial, x, y);
 		return best;
 	}
 
-	private void search(List<PowerOutage> partial, int level, List<PowerOutage> powerOutages, int x, int y) {
+	private void search(List<PowerOutage> partial, int x, int y) {
 		int numberOfCustomers = calculateNumberOfCustomers(partial);
 		if (numberOfCustomers > bestNumberOfCustomers) {
 			best = new ArrayList<PowerOutage>(partial);
 			bestNumberOfCustomers = numberOfCustomers;
 		}
-		for (PowerOutage po : powerOutages) {
+		for (PowerOutage po : powerOutagesByNerc) {
 			if (!partial.contains(po)) {
 				partial.add(po);
 				long sumHours = sumHours(partial);
 				int maxYear = getMaxYear(partial);
 				int minYear = getMinYear(partial);
 				if (sumHours <= y && (maxYear - minYear) <= x)
-					search(partial, level + 1, powerOutages, x, y);
+					search(partial, x, y);
 				partial.remove(po);
 			}
 		}
